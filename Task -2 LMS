@@ -1,0 +1,117 @@
+# %%
+import pandas as pd
+import numpy as np
+
+# Create a hypothetical dataset
+data = {
+    'book_id': np.arange(1, 101),
+    'user_id': np.random.randint(1, 21, 100),
+    'borrowed_count': np.random.randint(1, 50, 100),
+    'genre': np.random.choice(['Fiction', 'Non-Fiction', 'Science', 'History'], 100),
+    'rating': np.random.uniform(1, 5, 100),
+    'pages': np.random.randint(100, 1000, 100)
+}
+
+df = pd.DataFrame(data)
+
+# Display the first few rows of the dataset
+df.head()
+
+
+# %%
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+
+# Encode categorical variables
+le = LabelEncoder()
+df['genre'] = le.fit_transform(df['genre'])
+
+# Select features for clustering
+X = df[['user_id', 'borrowed_count', 'genre', 'rating', 'pages']]
+
+# Scale numerical features
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+
+# %%
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score, davies_bouldin_score
+
+# Apply K-means clustering
+kmeans = KMeans(n_clusters=3, random_state=42)
+kmeans_labels = kmeans.fit_predict(X_scaled)
+
+# Evaluate K-means clustering
+kmeans_silhouette = silhouette_score(X_scaled, kmeans_labels)
+kmeans_db_index = davies_bouldin_score(X_scaled, kmeans_labels)
+
+print(f'K-means Silhouette Score: {kmeans_silhouette:.4f}')
+print(f'K-means Davies-Bouldin Index: {kmeans_db_index:.4f}')
+
+
+# %%
+from sklearn.cluster import AgglomerativeClustering
+
+# Apply hierarchical clustering
+hierarchical = AgglomerativeClustering(n_clusters=3)
+hierarchical_labels = hierarchical.fit_predict(X_scaled)
+
+# Evaluate hierarchical clustering
+hierarchical_silhouette = silhouette_score(X_scaled, hierarchical_labels)
+hierarchical_db_index = davies_bouldin_score(X_scaled, hierarchical_labels)
+
+print(f'Hierarchical Clustering Silhouette Score: {hierarchical_silhouette:.4f}')
+print(f'Hierarchical Clustering Davies-Bouldin Index: {hierarchical_db_index:.4f}')
+
+
+# %%
+from sklearn.cluster import DBSCAN
+
+# Apply DBSCAN
+dbscan = DBSCAN(eps=0.5, min_samples=5)
+dbscan_labels = dbscan.fit_predict(X_scaled)
+
+# Filter out noise points for evaluation
+filtered_labels = dbscan_labels[dbscan_labels != -1]
+filtered_data = X_scaled[dbscan_labels != -1]
+
+# Evaluate DBSCAN clustering
+if len(filtered_labels) > 0:
+    dbscan_silhouette = silhouette_score(filtered_data, filtered_labels)
+    dbscan_db_index = davies_bouldin_score(filtered_data, filtered_labels)
+    print(f'DBSCAN Silhouette Score: {dbscan_silhouette:.4f}')
+    print(f'DBSCAN Davies-Bouldin Index: {dbscan_db_index:.4f}')
+else:
+    print('DBSCAN resulted in all noise points.')
+
+
+# %%
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Visualize K-means clustering
+plt.figure(figsize=(12, 6))
+sns.scatterplot(x=X_scaled[:, 0], y=X_scaled[:, 1], hue=kmeans_labels, palette='viridis')
+plt.title('K-means Clustering')
+plt.xlabel('Feature 1')
+plt.ylabel('Feature 2')
+plt.show()
+
+# Visualize Hierarchical clustering
+plt.figure(figsize=(12, 6))
+sns.scatterplot(x=X_scaled[:, 0], y=X_scaled[:, 1], hue=hierarchical_labels, palette='viridis')
+plt.title('Hierarchical Clustering')
+plt.xlabel('Feature 1')
+plt.ylabel('Feature 2')
+plt.show()
+
+# Visualize DBSCAN clustering
+plt.figure(figsize=(12, 6))
+sns.scatterplot(x=X_scaled[:, 0], y=X_scaled[:, 1], hue=dbscan_labels, palette='viridis')
+plt.title('DBSCAN Clustering')
+plt.xlabel('Feature 1')
+plt.ylabel('Feature 2')
+plt.show()
+
+
+
